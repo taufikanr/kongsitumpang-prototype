@@ -53,7 +53,7 @@
 <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
 <style>
   html, body { background: #FAF7F2; }
-  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   /* hide spin buttons on number inputs */
   input[type=number]::-webkit-outer-spin-button,
   input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
@@ -70,6 +70,9 @@
   }
   .input { width:100%; background:white; border:1px solid rgba(0,0,0,0.10); border-radius:0.75rem; padding:0.625rem 0.75rem; font-size:14px; outline:none; transition:border-color .15s, box-shadow .15s; }
   .input:focus { border-color:#16A34A; box-shadow:0 0 0 4px rgba(22,163,74,0.14); }
+  /* responsive bits — bypass Tailwind JIT for reliability */
+  .stats-strip { display: none; }
+  @media (min-width: 768px) { .stats-strip { display: flex; } }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation:none !important; transition:none !important; }
   }
@@ -213,9 +216,9 @@ function VerifiedBadge({ uni, compact=false }) {
 
 function Stat({ value, label, accent }) {
   return (
-    <div className="flex items-baseline gap-1.5">
-      <span className={"font-extrabold text-lg " + (accent ? "text-brand-700" : "text-ink")}>{value}</span>
-      <span className="text-[11px] text-ink-muted font-medium uppercase tracking-wide">{label}</span>
+    <div className="min-w-0">
+      <div className={"font-extrabold text-lg leading-none " + (accent ? "text-brand-700" : "text-ink")}>{value}</div>
+      <div className="text-[10px] text-ink-muted font-medium uppercase tracking-wide mt-1 truncate">{label}</div>
     </div>
   );
 }
@@ -263,12 +266,14 @@ function RideCard({ ride, onClick, index=0 }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-cream border border-black/5 px-2.5 py-1 text-[11px] font-semibold text-ink/80">
+      <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-cream border border-black/5 px-2.5 py-1 text-[11px] font-semibold text-ink/80 shrink-0">
           <Icon name="calendar" className="w-3 h-3 text-brand-600" />
           {formatDate(ride.date)}
         </div>
-        <SeatDots total={ride.seatsTotal} taken={ride.seatsTaken} animate={!isFull && ride.seatsTotal - ride.seatsTaken === 1} />
+        <div className="shrink-0">
+          <SeatDots total={ride.seatsTotal} taken={ride.seatsTaken} animate={!isFull && ride.seatsTotal - ride.seatsTaken === 1} />
+        </div>
       </div>
 
       <div className="mt-3 pt-3 border-t border-dashed border-black/5 flex items-center justify-between gap-2">
@@ -296,22 +301,23 @@ function RideCard({ ride, onClick, index=0 }) {
 function TopBar({ activeRides, onPost }) {
   return (
     <header className="sticky top-0 z-40 bg-cream/85 backdrop-blur-lg border-b border-black/[0.06]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 flex items-center gap-3">
         <a href="#" className="flex items-center gap-2 shrink-0 group">
           <LogoMark className="w-9 h-9 group-hover:scale-105 transition-transform" />
-          <div className="font-extrabold tracking-tight text-[15px]">KongsiTumpang</div>
+          <div className="header-title font-extrabold tracking-tight text-[15px]">KongsiTumpang</div>
         </a>
-        <div className="hidden md:flex items-center gap-1.5 text-xs">
+        <div className="stats-strip ml-3 items-center gap-1.5 text-xs shrink-0">
           <span className="relative flex h-2 w-2">
             <span className="animate-pulse-soft absolute inline-flex h-full w-full rounded-full bg-brand-500/60"/>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-600"/>
           </span>
-          <span className="font-semibold text-ink"><span className="tabular-nums">{activeRides}</span> active rides</span>
-          <span className="text-ink-muted">· 247 students helped this week</span>
+          <span className="font-semibold text-ink whitespace-nowrap"><span className="tabular-nums">{activeRides}</span> active rides</span>
+          <span className="text-ink-muted whitespace-nowrap">· 247 students helped this week</span>
         </div>
-        <button onClick={onPost}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 shadow-sm hover:shadow-md transition-all cursor-pointer">
-          <Icon name="plus" className="w-3.5 h-3.5" strokeWidth={3} /> Post a ride
+        <button onClick={onPost} aria-label="Post a ride"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 shadow-sm hover:shadow-md transition-all cursor-pointer shrink-0 whitespace-nowrap">
+          <Icon name="plus" className="w-3.5 h-3.5" strokeWidth={3} />
+          Post a ride
         </button>
       </div>
     </header>
@@ -322,11 +328,11 @@ function TopBar({ activeRides, onPost }) {
 function Hero({ activeRides }) {
   return (
     <section className="mesh">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-7 pb-8 sm:pt-10 sm:pb-12 grid md:grid-cols-[1.4fr,1fr] gap-6 items-center">
-        <div className="animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 border border-brand-100 px-3 py-1 text-[11px] font-semibold text-brand-700 mb-3">
-            <Icon name="trending" className="w-3 h-3" strokeWidth={2.5} />
-            <span className="tabular-nums">{activeRides}</span> rides live now · join 247 students this week
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-7 pb-8 sm:pt-10 sm:pb-12 grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-6 items-center">
+        <div className="min-w-0 animate-fade-in">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 border border-brand-100 px-3 py-1 text-[11px] font-semibold text-brand-700 mb-3 max-w-full">
+            <Icon name="trending" className="w-3 h-3 shrink-0" strokeWidth={2.5} />
+            <span className="truncate"><span className="tabular-nums">{activeRides}</span> rides live now · join 247 students this week</span>
           </div>
           <h1 className="text-3xl sm:text-[40px] leading-[1.05] font-extrabold text-ink tracking-tight">
             Nak balik kampung?
@@ -347,7 +353,7 @@ function Hero({ activeRides }) {
         </div>
 
         {/* stats card */}
-        <div className="bg-paper rounded-2xl shadow-card border border-black/[0.05] p-5 animate-pop-in" style={{animationDelay:'120ms'}}>
+        <div className="min-w-0 bg-paper rounded-2xl shadow-card border border-black/[0.05] p-5 animate-pop-in" style={{animationDelay:'120ms'}}>
           <div className="text-[11px] font-bold text-brand-700 uppercase tracking-wider mb-3">This semester</div>
           <div className="grid grid-cols-2 gap-y-3 gap-x-4">
             <Stat value="1,284" label="rides shared" accent />
@@ -357,8 +363,8 @@ function Hero({ activeRides }) {
           </div>
           <div className="mt-4 pt-4 border-t border-black/5">
             <div className="flex items-center gap-2 text-[11px] text-ink-muted">
-              <Icon name="shield" className="w-3.5 h-3.5 text-brand-600" />
-              Every UMS driver verified via student email
+              <Icon name="shield" className="w-3.5 h-3.5 text-brand-600 shrink-0" />
+              <span className="truncate">Every UMS driver verified via student email</span>
             </div>
           </div>
         </div>
@@ -799,9 +805,9 @@ function App() {
       />
 
       <main id="feed" className="max-w-6xl mx-auto px-4 sm:px-6 py-5">
-        <div className="grid lg:grid-cols-[1fr,320px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           {/* feed column */}
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-baseline gap-2">
                 <div className="text-sm font-bold text-ink">
