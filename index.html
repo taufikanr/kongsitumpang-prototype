@@ -49,6 +49,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
 <style>
   html, body { background: #FAF7F2; }
@@ -80,34 +81,41 @@
 <script type="text/babel" data-presets="react">
 const { useState, useMemo, useEffect, useRef } = React;
 
-/* ---------- icon set (inline SVG, lucide style) ---------- */
-const Icon = ({ name, className = "w-5 h-5", strokeWidth = 2 }) => {
-  const props = {
-    xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "none",
-    stroke: "currentColor", strokeWidth, strokeLinecap: "round", strokeLinejoin: "round",
-    className, "aria-hidden": "true",
-  };
-  const paths = {
-    mapPin:   <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>,
-    calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,
-    users:    <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
-    msg:      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/>,
-    plus:     <><path d="M12 5v14M5 12h14"/></>,
-    x:        <><path d="M18 6 6 18M6 6l12 12"/></>,
-    arrowRight: <><path d="M5 12h14M13 5l7 7-7 7"/></>,
-    check:    <path d="M20 6 9 17l-5-5"/>,
-    search:   <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
-    clock:    <><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></>,
-    money:    <><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 18V6"/></>,
-    car:      <><path d="M14 16H9m10 0h2v-3.28a2 2 0 0 0-.7-1.52L18 9.5l-1.84-4.6A2 2 0 0 0 14.31 4H9.7a2 2 0 0 0-1.86 1.27L6 9.5l-2.3 1.7A2 2 0 0 0 3 12.72V16h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></>,
-    shield:   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>,
-    sparkles: <><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></>,
-    trending: <><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></>,
-    flame:    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 17c1.5 0 2.5-.75 3-2 .5-1 1-3-.5-4-1.25-.83-1.5-2-1.5-2.5C12 7 11 5 9 4c0 2-2 3-2 5 0 1.21.46 2.18 1 3l.5.5Z"/>,
-    info:     <><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></>,
-    chev:     <path d="m9 6 6 6-6 6"/>,
-  };
-  return <svg {...props}>{paths[name]}</svg>;
+/* ---------- icon: real Lucide via UMD ---------- */
+const ICON_MAP = {
+  mapPin:'MapPin', calendar:'Calendar', users:'Users', msg:'MessageCircle',
+  plus:'Plus', x:'X', arrowRight:'ArrowRight', check:'Check', search:'Search',
+  clock:'Clock', money:'CircleDollarSign', car:'Car', shield:'Shield',
+  sparkles:'Sparkles', trending:'TrendingUp', flame:'Flame', info:'Info',
+  chev:'ChevronRight',
+};
+const kebabToCamel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+const camelizeAttrs = (attrs = {}) => {
+  const out = {};
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'width' || k === 'height') continue; // let className control size
+    out[kebabToCamel(k)] = v;
+  }
+  return out;
+};
+const Icon = ({ name, className = "w-5 h-5", strokeWidth }) => {
+  const lucideName = ICON_MAP[name] || name;
+  const data = (typeof window !== 'undefined' && window.lucide && window.lucide.icons)
+    ? window.lucide.icons[lucideName] : null;
+  if (!data) {
+    // graceful placeholder: empty SVG with correct sizing so layout doesn't shift
+    return <svg viewBox="0 0 24 24" className={className} aria-hidden="true" />;
+  }
+  const [tag, rawAttrs, children = []] = data;
+  const attrs = camelizeAttrs(rawAttrs);
+  const finalProps = { ...attrs, className, 'aria-hidden': 'true' };
+  if (strokeWidth != null) finalProps.strokeWidth = strokeWidth;
+  return React.createElement(
+    tag, finalProps,
+    ...children.map(([childTag, childAttrs], i) =>
+      React.createElement(childTag, { key: i, ...camelizeAttrs(childAttrs) })
+    )
+  );
 };
 
 /* ---------- brand logo mark ---------- */
